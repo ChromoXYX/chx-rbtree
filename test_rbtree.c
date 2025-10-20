@@ -8,19 +8,19 @@
 /* 测试节点结构 */
 struct test_node {
     int key;
-    struct rb_node rb;
+    struct chx_rb_node rb;
 };
 
 /* 比较函数 */
-static bool less_func(struct rb_node* a, const struct rb_node* b) {
-    struct test_node* node_a = rb_entry(a, struct test_node, rb);
-    struct test_node* node_b = rb_entry(b, struct test_node, rb);
+static bool less_func(struct chx_rb_node* a, const struct chx_rb_node* b) {
+    struct test_node* node_a = chx_rb_entry(a, struct test_node, rb);
+    struct test_node* node_b = chx_rb_entry(b, struct test_node, rb);
     return node_a->key < node_b->key;
 }
 
-static int cmp_func(struct rb_node* a, const struct rb_node* b) {
-    struct test_node* node_a = rb_entry(a, struct test_node, rb);
-    struct test_node* node_b = rb_entry(b, struct test_node, rb);
+static int cmp_func(struct chx_rb_node* a, const struct chx_rb_node* b) {
+    struct test_node* node_a = chx_rb_entry(a, struct test_node, rb);
+    struct test_node* node_b = chx_rb_entry(b, struct test_node, rb);
     if (node_a->key < node_b->key)
         return -1;
     else if (node_a->key > node_b->key)
@@ -28,9 +28,9 @@ static int cmp_func(struct rb_node* a, const struct rb_node* b) {
     return 0;
 }
 
-static int key_cmp_func(const void* key, const struct rb_node* node) {
+static int key_cmp_func(const void* key, const struct chx_rb_node* node) {
     int k = *(const int*)key;
-    struct test_node* n = rb_entry(node, struct test_node, rb);
+    struct test_node* n = chx_rb_entry(node, struct test_node, rb);
     if (k < n->key)
         return -1;
     else if (k > n->key)
@@ -43,18 +43,18 @@ static struct test_node* create_node(int key) {
     struct test_node* node = malloc(sizeof(*node));
     assert(node != NULL);
     node->key = key;
-    RB_CLEAR_NODE(&node->rb);
+    CHX_RB_CLEAR_NODE(&node->rb);
     return node;
 }
 
 /* 辅助函数：验证树的顺序 */
-static int verify_order(struct rb_root* root) {
-    struct rb_node* node;
+static int verify_order(struct chx_rb_root* root) {
+    struct chx_rb_node* node;
     int prev = -1;
     int count = 0;
-    
-    for (node = rb_first(root); node; node = rb_next(node)) {
-        struct test_node* tn = rb_entry(node, struct test_node, rb);
+
+    for (node = chx_rb_first(root); node; node = chx_rb_next(node)) {
+        struct test_node* tn = chx_rb_entry(node, struct test_node, rb);
         if (prev >= 0 && tn->key < prev) {
             fprintf(stderr, "顺序错误: prev=%d, current=%d\n", prev, tn->key);
             return -1;
@@ -66,12 +66,12 @@ static int verify_order(struct rb_root* root) {
 }
 
 /* 辅助函数：清空树 */
-static void clear_tree(struct rb_root* root) {
-    struct rb_node *node, *next;
-    for (node = rb_first(root); node; node = next) {
-        next = rb_next(node);
-        struct test_node* tn = rb_entry(node, struct test_node, rb);
-        rb_erase(&tn->rb, root);
+static void clear_tree(struct chx_rb_root* root) {
+    struct chx_rb_node *node, *next;
+    for (node = chx_rb_first(root); node; node = next) {
+        next = chx_rb_next(node);
+        struct test_node* tn = chx_rb_entry(node, struct test_node, rb);
+        chx_rb_erase(&tn->rb, root);
         free(tn);
     }
 }
@@ -79,22 +79,22 @@ static void clear_tree(struct rb_root* root) {
 /* 测试1: 基本插入和遍历 */
 static int test_basic_insert(void) {
     printf("测试1: 基本插入和遍历...");
-    struct rb_root root = RB_ROOT;
+    struct chx_rb_root root = CHX_RB_ROOT;
     int test_data[] = {5, 2, 8, 1, 3, 7, 9, 4, 6};
     int n = sizeof(test_data) / sizeof(test_data[0]);
-    
+
     for (int i = 0; i < n; i++) {
         struct test_node* node = create_node(test_data[i]);
-        rb_add(&node->rb, &root, less_func);
+        chx_rb_add(&node->rb, &root, less_func);
     }
-    
+
     int count = verify_order(&root);
     if (count != n) {
         printf("失败 (期望%d个节点，实际%d个)\n", n, count);
         clear_tree(&root);
         return 1;
     }
-    
+
     clear_tree(&root);
     printf("通过\n");
     return 0;
@@ -103,29 +103,29 @@ static int test_basic_insert(void) {
 /* 测试2: 删除操作 */
 static int test_erase(void) {
     printf("测试2: 删除操作...");
-    struct rb_root root = RB_ROOT;
+    struct chx_rb_root root = CHX_RB_ROOT;
     struct test_node* nodes[10];
-    
+
     for (int i = 0; i < 10; i++) {
         nodes[i] = create_node(i);
-        rb_add(&nodes[i]->rb, &root, less_func);
+        chx_rb_add(&nodes[i]->rb, &root, less_func);
     }
-    
+
     /* 删除一些节点 */
-    rb_erase(&nodes[5]->rb, &root);
+    chx_rb_erase(&nodes[5]->rb, &root);
     free(nodes[5]);
-    rb_erase(&nodes[0]->rb, &root);
+    chx_rb_erase(&nodes[0]->rb, &root);
     free(nodes[0]);
-    rb_erase(&nodes[9]->rb, &root);
+    chx_rb_erase(&nodes[9]->rb, &root);
     free(nodes[9]);
-    
+
     int count = verify_order(&root);
     if (count != 7) {
         printf("失败 (期望7个节点，实际%d个)\n", count);
         clear_tree(&root);
         return 1;
     }
-    
+
     clear_tree(&root);
     printf("通过\n");
     return 0;
@@ -134,38 +134,38 @@ static int test_erase(void) {
 /* 测试3: rb_find查找 */
 static int test_find(void) {
     printf("测试3: rb_find查找...");
-    struct rb_root root = RB_ROOT;
-    
+    struct chx_rb_root root = CHX_RB_ROOT;
+
     for (int i = 0; i < 100; i += 10) {
         struct test_node* node = create_node(i);
-        rb_add(&node->rb, &root, less_func);
+        chx_rb_add(&node->rb, &root, less_func);
     }
-    
+
     /* 查找存在的键 */
     int key = 50;
-    struct rb_node* found = rb_find(&key, &root, key_cmp_func);
+    struct chx_rb_node* found = chx_rb_find(&key, &root, key_cmp_func);
     if (!found) {
         printf("失败 (未找到键50)\n");
         clear_tree(&root);
         return 1;
     }
-    
-    struct test_node* tn = rb_entry(found, struct test_node, rb);
+
+    struct test_node* tn = chx_rb_entry(found, struct test_node, rb);
     if (tn->key != 50) {
         printf("失败 (找到错误的节点)\n");
         clear_tree(&root);
         return 1;
     }
-    
+
     /* 查找不存在的键 */
     key = 55;
-    found = rb_find(&key, &root, key_cmp_func);
+    found = chx_rb_find(&key, &root, key_cmp_func);
     if (found) {
         printf("失败 (不应该找到键55)\n");
         clear_tree(&root);
         return 1;
     }
-    
+
     clear_tree(&root);
     printf("通过\n");
     return 0;
@@ -174,31 +174,31 @@ static int test_find(void) {
 /* 测试4: rb_first和rb_last */
 static int test_first_last(void) {
     printf("测试4: rb_first和rb_last...");
-    struct rb_root root = RB_ROOT;
-    
+    struct chx_rb_root root = CHX_RB_ROOT;
+
     for (int i = 10; i >= 1; i--) {
         struct test_node* node = create_node(i);
-        rb_add(&node->rb, &root, less_func);
+        chx_rb_add(&node->rb, &root, less_func);
     }
-    
-    struct rb_node* first = rb_first(&root);
-    struct rb_node* last = rb_last(&root);
-    
+
+    struct chx_rb_node* first = chx_rb_first(&root);
+    struct chx_rb_node* last = chx_rb_last(&root);
+
     if (!first || !last) {
         printf("失败 (first或last为NULL)\n");
         clear_tree(&root);
         return 1;
     }
-    
-    struct test_node* fn = rb_entry(first, struct test_node, rb);
-    struct test_node* ln = rb_entry(last, struct test_node, rb);
-    
+
+    struct test_node* fn = chx_rb_entry(first, struct test_node, rb);
+    struct test_node* ln = chx_rb_entry(last, struct test_node, rb);
+
     if (fn->key != 1 || ln->key != 10) {
         printf("失败 (first=%d, last=%d)\n", fn->key, ln->key);
         clear_tree(&root);
         return 1;
     }
-    
+
     clear_tree(&root);
     printf("通过\n");
     return 0;
@@ -207,16 +207,17 @@ static int test_first_last(void) {
 /* 测试5: rb_prev遍历 */
 static int test_prev(void) {
     printf("测试5: rb_prev反向遍历...");
-    struct rb_root root = RB_ROOT;
-    
+    struct chx_rb_root root = CHX_RB_ROOT;
+
     for (int i = 0; i < 10; i++) {
         struct test_node* node = create_node(i);
-        rb_add(&node->rb, &root, less_func);
+        chx_rb_add(&node->rb, &root, less_func);
     }
-    
+
     int expected = 9;
-    for (struct rb_node* node = rb_last(&root); node; node = rb_prev(node)) {
-        struct test_node* tn = rb_entry(node, struct test_node, rb);
+    for (struct chx_rb_node* node = chx_rb_last(&root); node;
+         node = chx_rb_prev(node)) {
+        struct test_node* tn = chx_rb_entry(node, struct test_node, rb);
         if (tn->key != expected) {
             printf("失败 (期望%d，实际%d)\n", expected, tn->key);
             clear_tree(&root);
@@ -224,13 +225,13 @@ static int test_prev(void) {
         }
         expected--;
     }
-    
+
     if (expected != -1) {
         printf("失败 (遍历不完整)\n");
         clear_tree(&root);
         return 1;
     }
-    
+
     clear_tree(&root);
     printf("通过\n");
     return 0;
@@ -239,18 +240,18 @@ static int test_prev(void) {
 /* 测试6: 空树操作 */
 static int test_empty_tree(void) {
     printf("测试6: 空树操作...");
-    struct rb_root root = RB_ROOT;
-    
-    if (!RB_EMPTY_ROOT(&root)) {
+    struct chx_rb_root root = CHX_RB_ROOT;
+
+    if (!CHX_RB_EMPTY_ROOT(&root)) {
         printf("失败 (RB_EMPTY_ROOT检查失败)\n");
         return 1;
     }
-    
-    if (rb_first(&root) != NULL || rb_last(&root) != NULL) {
+
+    if (chx_rb_first(&root) != NULL || chx_rb_last(&root) != NULL) {
         printf("失败 (空树的first/last应为NULL)\n");
         return 1;
     }
-    
+
     printf("通过\n");
     return 0;
 }
@@ -258,39 +259,39 @@ static int test_empty_tree(void) {
 /* 测试7: cached版本 */
 static int test_cached(void) {
     printf("测试7: cached版本...");
-    struct rb_root_cached root = RB_ROOT_CACHED;
-    
+    struct chx_rb_root_cached root = CHX_RB_ROOT_CACHED;
+
     for (int i = 9; i >= 0; i--) {
         struct test_node* node = create_node(i);
-        rb_add_cached(&node->rb, &root, less_func);
+        chx_rb_add_cached(&node->rb, &root, less_func);
     }
-    
-    struct rb_node* leftmost = rb_first_cached(&root);
+
+    struct chx_rb_node* leftmost = chx_rb_first_cached(&root);
     if (!leftmost) {
         printf("失败 (leftmost为NULL)\n");
         clear_tree(&root.rb_root);
         return 1;
     }
-    
-    struct test_node* tn = rb_entry(leftmost, struct test_node, rb);
+
+    struct test_node* tn = chx_rb_entry(leftmost, struct test_node, rb);
     if (tn->key != 0) {
         printf("失败 (leftmost键值错误: %d)\n", tn->key);
         clear_tree(&root.rb_root);
         return 1;
     }
-    
+
     /* 测试erase_cached */
-    rb_erase_cached(leftmost, &root);
+    chx_rb_erase_cached(leftmost, &root);
     free(tn);
-    
-    leftmost = rb_first_cached(&root);
-    tn = rb_entry(leftmost, struct test_node, rb);
+
+    leftmost = chx_rb_first_cached(&root);
+    tn = chx_rb_entry(leftmost, struct test_node, rb);
     if (tn->key != 1) {
         printf("失败 (删除后leftmost错误: %d)\n", tn->key);
         clear_tree(&root.rb_root);
         return 1;
     }
-    
+
     clear_tree(&root.rb_root);
     printf("通过\n");
     return 0;
@@ -299,26 +300,26 @@ static int test_cached(void) {
 /* 测试8: rb_replace_node */
 static int test_replace_node(void) {
     printf("测试8: rb_replace_node...");
-    struct rb_root root = RB_ROOT;
+    struct chx_rb_root root = CHX_RB_ROOT;
     struct test_node* nodes[5];
-    
+
     for (int i = 0; i < 5; i++) {
         nodes[i] = create_node(i * 10);
-        rb_add(&nodes[i]->rb, &root, less_func);
+        chx_rb_add(&nodes[i]->rb, &root, less_func);
     }
-    
+
     /* 替换中间节点 */
     struct test_node* new_node = create_node(20);
-    rb_replace_node(&nodes[2]->rb, &new_node->rb, &root);
+    chx_rb_replace_node(&nodes[2]->rb, &new_node->rb, &root);
     free(nodes[2]);
-    
+
     int count = verify_order(&root);
     if (count != 5) {
         printf("失败 (节点数错误)\n");
         clear_tree(&root);
         return 1;
     }
-    
+
     clear_tree(&root);
     printf("通过\n");
     return 0;
@@ -327,26 +328,25 @@ static int test_replace_node(void) {
 /* 测试9: postorder遍历 */
 static int test_postorder(void) {
     printf("测试9: postorder遍历...");
-    struct rb_root root = RB_ROOT;
-    
+    struct chx_rb_root root = CHX_RB_ROOT;
+
     for (int i = 0; i < 10; i++) {
         struct test_node* node = create_node(i);
-        rb_add(&node->rb, &root, less_func);
+        chx_rb_add(&node->rb, &root, less_func);
     }
-    
+
     int count = 0;
-    for (struct rb_node* node = rb_first_postorder(&root); 
-         node; 
-         node = rb_next_postorder(node)) {
+    for (struct chx_rb_node* node = chx_rb_first_postorder(&root); node;
+         node = chx_rb_next_postorder(node)) {
         count++;
     }
-    
+
     if (count != 10) {
         printf("失败 (遍历数量错误: %d)\n", count);
         clear_tree(&root);
         return 1;
     }
-    
+
     clear_tree(&root);
     printf("通过\n");
     return 0;
@@ -355,20 +355,20 @@ static int test_postorder(void) {
 /* 测试10: rb_find_add */
 static int test_find_add(void) {
     printf("测试10: rb_find_add...");
-    struct rb_root root = RB_ROOT;
-    
+    struct chx_rb_root root = CHX_RB_ROOT;
+
     /* 插入新节点 */
     struct test_node* node1 = create_node(10);
-    struct rb_node* result = rb_find_add(&node1->rb, &root, cmp_func);
+    struct chx_rb_node* result = chx_rb_find_add(&node1->rb, &root, cmp_func);
     if (result != NULL) {
         printf("失败 (首次插入应返回NULL)\n");
         clear_tree(&root);
         return 1;
     }
-    
+
     /* 尝试插入重复节点 */
     struct test_node* node2 = create_node(10);
-    result = rb_find_add(&node2->rb, &root, cmp_func);
+    result = chx_rb_find_add(&node2->rb, &root, cmp_func);
     if (result == NULL) {
         printf("失败 (重复插入应返回已存在节点)\n");
         free(node2);
@@ -376,14 +376,14 @@ static int test_find_add(void) {
         return 1;
     }
     free(node2);
-    
+
     int count = verify_order(&root);
     if (count != 1) {
         printf("失败 (应只有1个节点)\n");
         clear_tree(&root);
         return 1;
     }
-    
+
     clear_tree(&root);
     printf("通过\n");
     return 0;
@@ -392,23 +392,23 @@ static int test_find_add(void) {
 /* 测试11: 大量数据压力测试 */
 static int test_stress(void) {
     printf("测试11: 大量数据压力测试...");
-    struct rb_root root = RB_ROOT;
+    struct chx_rb_root root = CHX_RB_ROOT;
     const int N = 1000;
-    
+
     /* 插入大量随机数据 */
     srand(time(NULL));
     for (int i = 0; i < N; i++) {
         struct test_node* node = create_node(rand() % 10000);
-        rb_add(&node->rb, &root, less_func);
+        chx_rb_add(&node->rb, &root, less_func);
     }
-    
+
     int count = verify_order(&root);
     if (count < 0) {
         printf("失败 (顺序验证失败)\n");
         clear_tree(&root);
         return 1;
     }
-    
+
     clear_tree(&root);
     printf("通过 (%d个节点)\n", count);
     return 0;
@@ -418,34 +418,34 @@ static int test_stress(void) {
 static int test_empty_node(void) {
     printf("测试12: RB_EMPTY_NODE和RB_CLEAR_NODE...");
     struct test_node node;
-    
-    RB_CLEAR_NODE(&node.rb);
-    if (!RB_EMPTY_NODE(&node.rb)) {
+
+    CHX_RB_CLEAR_NODE(&node.rb);
+    if (!CHX_RB_EMPTY_NODE(&node.rb)) {
         printf("失败 (RB_CLEAR_NODE后应为空)\n");
         return 1;
     }
-    
+
     /* 插入到树中后不应为空 */
-    struct rb_root root = RB_ROOT;
+    struct chx_rb_root root = CHX_RB_ROOT;
     node.key = 10;
-    rb_add(&node.rb, &root, less_func);
-    
-    if (RB_EMPTY_NODE(&node.rb)) {
+    chx_rb_add(&node.rb, &root, less_func);
+
+    if (CHX_RB_EMPTY_NODE(&node.rb)) {
         printf("失败 (插入后不应为空)\n");
-        rb_erase(&node.rb, &root);
+        chx_rb_erase(&node.rb, &root);
         return 1;
     }
-    
-    rb_erase(&node.rb, &root);
+
+    chx_rb_erase(&node.rb, &root);
     printf("通过\n");
     return 0;
 }
 
 int main(void) {
     int failed = 0;
-    
+
     printf("======== rbtree 单元测试 ========\n\n");
-    
+
     failed += test_basic_insert();
     failed += test_erase();
     failed += test_find();
@@ -458,7 +458,7 @@ int main(void) {
     failed += test_find_add();
     failed += test_stress();
     failed += test_empty_node();
-    
+
     printf("\n================================\n");
     if (failed == 0) {
         printf("所有测试通过！\n");

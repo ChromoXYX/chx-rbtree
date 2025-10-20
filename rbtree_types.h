@@ -1,15 +1,15 @@
 /* SPDX-License-Identifier: GPL-2.0-or-later */
 #pragma once
 
-struct rb_node {
-	unsigned long  __rb_parent_color;
-	struct rb_node *rb_right;
-	struct rb_node *rb_left;
+struct chx_rb_node {
+    unsigned long __rb_parent_color;
+    struct chx_rb_node* rb_right;
+    struct chx_rb_node* rb_left;
 } __attribute__((aligned(sizeof(long))));
 /* The alignment might seem pointless, but allegedly CRIS needs it */
 
-struct rb_root {
-	struct rb_node *rb_node;
+struct chx_rb_root {
+    struct chx_rb_node* rb_node;
 };
 
 /*
@@ -22,10 +22,17 @@ struct rb_root {
  * Furthermore, users that want to cache both pointers may
  * find it a bit asymmetric, but that's ok.
  */
-struct rb_root_cached {
-	struct rb_root rb_root;
-	struct rb_node *rb_leftmost;
+struct chx_rb_root_cached {
+    struct chx_rb_root rb_root;
+    struct chx_rb_node* rb_leftmost;
 };
 
-#define RB_ROOT (struct rb_root) { NULL, }
-#define RB_ROOT_CACHED (struct rb_root_cached) { {NULL, }, NULL }
+#define CHX_RB_ROOT                                                            \
+    (struct chx_rb_root) { NULL, }
+#define CHX_RB_ROOT_CACHED                                                     \
+    (struct chx_rb_root_cached) {                                              \
+        {                                                                      \
+            NULL,                                                              \
+        },                                                                     \
+            NULL                                                               \
+    }
