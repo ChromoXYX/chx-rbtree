@@ -110,7 +110,7 @@ dkms.conf
 *.dwo
 
 configure~
-*.trs
-*.log
 
-test_rbtree
+tests/*
+!tests/*.c
+*.log
